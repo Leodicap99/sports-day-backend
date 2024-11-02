@@ -5,7 +5,6 @@ app.use(bodyParser.json());
 const cors = require("cors");
 const CryptoJS = require("crypto-js"); 
 app.use(cors());
-app.use(bodyParser.json());
 let users = [];
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_TIME = 5*60*1000;
@@ -22,6 +21,9 @@ app.post("/api/users", (req, res) => {
   );
   if (userExists) {
     return res.status(400).json({ error: "UserId already exists" });
+  }
+  if (!password) {
+    return res.status(400).json({ error: "Password is required" });
   }
    const encryptedPassword = CryptoJS.AES.encrypt(
      password,
@@ -76,6 +78,15 @@ app.post("/api/login", (req, res) => {
 app.post('/api/save-selected-events',(req,res)=>{
     const {userId, selectedEvents} = req.body;
     const user = users.find(user => user.userId.toLowerCase()===userId.toLowerCase());
+    if(!Array.isArray(selectedEvents) || (selectedEvents.length>3)){
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error:
+            "Selected events should be an array with a maximum of 3 events",
+        });
+    }
     if(user){
         user.selectedEvents = selectedEvents;
         const {password,...userWithoutPassword} = user
